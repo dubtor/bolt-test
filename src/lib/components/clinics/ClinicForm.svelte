@@ -5,7 +5,7 @@
   import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
   import type { Clinic, Doctor } from '../../types';
   import { countries, regions, hasRegions, type CountryCode } from '../../utils/countries';
-  import { addClinic, updateClinic } from '../../stores/clinics';
+  import { addClinic, updateClinic, validateClinic } from '../../stores/clinics';
 
   export let clinicId: string | undefined = undefined;
   
@@ -13,15 +13,16 @@
   let error: string | null = null;
   let currentStep = 0;
   let imageFiles: { main: File | null; gallery: File[] } = { main: null, gallery: [] };
+  let validationResult: { isValid: boolean; missingFields: string[] } | null = null;
 
   // Form data
-  let clinic: Partial<Clinic> = {
+  let clinic: Omit<Clinic, 'id'> = {
     name: '',
     description: '',
     address: {
       street: '',
       city: '',
-      country: 'TR' as CountryCode,
+      country: '' as CountryCode,
       region: '',
       postalCode: ''
     },
@@ -37,11 +38,11 @@
       website: ''
     },
     operatingHours: {
-      monday: { open: '09:00', close: '18:00' },
-      tuesday: { open: '09:00', close: '18:00' },
-      wednesday: { open: '09:00', close: '18:00' },
-      thursday: { open: '09:00', close: '18:00' },
-      friday: { open: '09:00', close: '18:00' }
+      monday: { open: '', close: '' },
+      tuesday: { open: '', close: '' },
+      wednesday: { open: '', close: '' },
+      thursday: { open: '', close: '' },
+      friday: { open: '', close: '' }
     },
     images: {
       main: '',
@@ -49,7 +50,12 @@
     },
     doctors: [],
     rating: 0,
-    reviewCount: 0
+    reviewCount: 0,
+    status: 'draft',
+    userId: '',
+    slug: '',
+    createdAt: new Date(),
+    updatedAt: new Date()
   };
 
   const steps = [
@@ -70,12 +76,12 @@
   ];
 
   // Reactive statement to handle country changes
-  $: if (clinic.address.country && !hasRegions(clinic.address.country)) {
+  $: if (clinic.address && clinic.address.country && !hasRegions(clinic.address.country)) {
     clinic.address.region = undefined;
   }
 
   // Get available regions for the selected country
-  $: availableRegions = clinic.address.country && hasRegions(clinic.address.country) 
+  $: availableRegions = clinic.address && clinic.address.country && hasRegions(clinic.address.country) 
     ? regions[clinic.address.country] 
     : null;
 
@@ -105,8 +111,9 @@
     return getDownloadURL(snapshot.ref);
   }
 
-  async function handleSubmit() {
-    if (!auth.currentUser) return;
+  async function handleSaveDraft() {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
 
     try {
       loading = true;
@@ -114,14 +121,14 @@
 
       // Handle image uploads
       if (imageFiles.main) {
-        const mainImagePath = `clinics/${auth.currentUser.uid}/${Date.now()}_main`;
+        const mainImagePath = `clinics/${currentUser.uid}/${Date.now()}_main`;
         clinic.images.main = await handleImageUpload(imageFiles.main, mainImagePath);
       }
 
       if (imageFiles.gallery.length > 0) {
         const galleryUrls = await Promise.all(
           imageFiles.gallery.map((file, index) => {
-            const galleryPath = `clinics/${auth.currentUser.uid}/${Date.now()}_gallery_${index}`;
+            const galleryPath = `clinics/${currentUser.uid}/${Date.now()}_gallery_${index}`;
             return handleImageUpload(file, galleryPath);
           })
         );
@@ -132,15 +139,70 @@
       const clinicData = { ...clinic };
       
       // Remove undefined region if country doesn't have regions
-      if (clinicData.address?.region === undefined) {
+      if (clinicData.address.region === undefined) {
         delete clinicData.address.region;
       }
 
       // Add or update clinic using store functions
       if (clinicId) {
-        await updateClinic(clinicId, clinicData);
+        await updateClinic(clinicId, { ...clinicData, status: 'draft' });
       } else {
-        await addClinic(clinicData);
+        await addClinic({ ...clinicData, status: 'draft' });
+      }
+
+      window.location.href = '/my-clinics';
+    } catch (e: any) {
+      error = e.message;
+      console.error(e);
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleSubmit() {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    try {
+      loading = true;
+      error = null;
+
+      // Validate the clinic before publishing
+      validationResult = validateClinic(clinic);
+      if (!validationResult.isValid) {
+        error = 'Please complete all required fields before publishing.';
+        return;
+      }
+
+      // Handle image uploads
+      if (imageFiles.main) {
+        const mainImagePath = `clinics/${currentUser.uid}/${Date.now()}_main`;
+        clinic.images.main = await handleImageUpload(imageFiles.main, mainImagePath);
+      }
+
+      if (imageFiles.gallery.length > 0) {
+        const galleryUrls = await Promise.all(
+          imageFiles.gallery.map((file, index) => {
+            const galleryPath = `clinics/${currentUser.uid}/${Date.now()}_gallery_${index}`;
+            return handleImageUpload(file, galleryPath);
+          })
+        );
+        clinic.images.gallery = galleryUrls;
+      }
+
+      // Create a copy of the clinic data for submission
+      const clinicData = { ...clinic };
+      
+      // Remove undefined region if country doesn't have regions
+      if (clinicData.address.region === undefined) {
+        delete clinicData.address.region;
+      }
+
+      // Add or update clinic using store functions
+      if (clinicId) {
+        await updateClinic(clinicId, { ...clinicData, status: 'published' });
+      } else {
+        await addClinic({ ...clinicData, status: 'published' });
       }
 
       window.location.href = '/';
@@ -178,6 +240,32 @@
     if (input.files?.length) {
       imageFiles.gallery = Array.from(input.files);
     }
+  }
+
+  function handleServiceChange(e: Event, service: string) {
+    const target = e.target as HTMLInputElement;
+    if (target.checked) {
+      clinic.services = [...clinic.services, service];
+    } else {
+      clinic.services = clinic.services.filter(s => s !== service);
+    }
+  }
+
+  function handleDoctorQualificationChange(e: Event, doctorIndex: number, qualification: string) {
+    const target = e.target as HTMLInputElement;
+    if (target.checked) {
+      clinic.doctors[doctorIndex].qualifications = [...clinic.doctors[doctorIndex].qualifications, qualification];
+    } else {
+      clinic.doctors[doctorIndex].qualifications = clinic.doctors[doctorIndex].qualifications.filter(q => q !== qualification);
+    }
+  }
+
+  function handleDoctorFieldChange(e: Event, doctorIndex: number, field: keyof Doctor) {
+    const target = e.target as HTMLInputElement;
+    clinic.doctors[doctorIndex] = {
+      ...clinic.doctors[doctorIndex],
+      [field]: field === 'experience' ? parseInt(target.value) || 0 : target.value
+    };
   }
 
   onMount(fetchClinic);
@@ -350,13 +438,7 @@
                     type="checkbox"
                     value={service}
                     checked={clinic.services.includes(service)}
-                    on:change={(e) => {
-                      if (e.target.checked) {
-                        clinic.services = [...clinic.services, service];
-                      } else {
-                        clinic.services = clinic.services.filter(s => s !== service);
-                      }
-                    }}
+                    on:change={(e) => handleServiceChange(e, service)}
                     class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
                   <span>{service}</span>
@@ -619,11 +701,41 @@
             Processing...
           </span>
         {:else if currentStep === steps.length - 1}
-          {clinicId ? 'Update' : 'Create'} Clinic
+          {clinicId ? 'Update' : 'Publish'} Clinic
         {:else}
           Next
         {/if}
       </button>
     </div>
+
+    <div class="flex justify-between mt-8">
+      <button
+        type="button"
+        on:click={handleSaveDraft}
+        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+        disabled={loading}
+      >
+        Save Draft
+      </button>
+      <button
+        type="button"
+        on:click={handleSubmit}
+        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        disabled={loading}
+      >
+        {clinicId ? 'Update' : 'Publish'} Clinic
+      </button>
+    </div>
+
+    {#if validationResult && !validationResult.isValid}
+      <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <h3 class="text-yellow-800 font-semibold mb-2">Missing Required Fields:</h3>
+        <ul class="list-disc list-inside text-yellow-700">
+          {#each validationResult.missingFields as field}
+            <li>{field}</li>
+          {/each}
+        </ul>
+      </div>
+    {/if}
   </div>
 </div>
