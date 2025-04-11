@@ -69,7 +69,7 @@
           <div class="p-6">
             <div class="flex justify-between items-start">
               <div>
-                <h3 class="text-xl font-semibold">{clinic.name}</h3>
+                <h3 class="text-xl font-semibold">{clinic.name || '(Unnamed Clinic)'}</h3>
                 <p class="text-gray-600 mt-2">{clinic.description}</p>
               </div>
               <div class="flex gap-2 items-center">
