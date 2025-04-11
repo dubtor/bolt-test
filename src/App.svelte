@@ -8,8 +8,7 @@
   import MyClinics from './lib/components/clinics/MyClinics.svelte';
   import SignIn from './lib/components/auth/SignIn.svelte';
   import SignUp from './lib/components/auth/SignUp.svelte';
-  import { getCountryCodeBySlug } from './lib/utils/countries';
-
+  
   let showSignIn = true;
   let currentPath = window.location.pathname;
   let clinicId = '';
@@ -104,12 +103,6 @@
     {:else if currentPath === '/my-clinics'}
       {#if $user}
         <MyClinics />
-      {:else}
-        <SignIn />
-      {/if}
-    {:else if currentPath === '/clinic/new'}
-      {#if $user}
-        <ClinicForm />
       {:else}
         <SignIn />
       {/if}
