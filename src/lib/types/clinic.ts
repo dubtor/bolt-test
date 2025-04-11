@@ -1,5 +1,6 @@
 import type { CountryCode } from '../utils/countries';
 import type { Doctor } from './doctor';
+import { validateDoctor } from './doctor';
 
 export type ClinicStatus = 'draft' | 'published';
 
@@ -146,6 +147,18 @@ export function validateClinic(clinic: Partial<Clinic>): { isValid: boolean; mis
   // Special validation for services
   if (!clinic.services || clinic.services.length === 0) {
     missingFields.push('services');
+  }
+
+  // Special validation for doctors
+  if (clinic.doctors && clinic.doctors.length > 0) {
+    clinic.doctors.forEach((doctor, index) => {
+      const doctorValidation = validateDoctor(doctor);
+      if (!doctorValidation.isValid) {
+        doctorValidation.missingFields.forEach(field => {
+          missingFields.push(`doctors[${index}].${field}`);
+        });
+      }
+    });
   }
 
   return {
