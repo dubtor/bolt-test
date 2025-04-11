@@ -1,0 +1,24 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the clinic
+    function isClinicOwner(clinicId) {
+      return isAuthenticated() && 
+             request.auth.uid == firestore.get(/databases/(default)/documents/clinics/$(clinicId)).data.userId;
+    }
+
+    // Match all files under clinics/{clinicId}/
+    match /clinics/{clinicId}/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && 
+                    isClinicOwner(clinicId) && 
+                    request.resource.size < 10 * 1024 * 1024 && // 10MB max
+                    request.resource.contentType.matches('image/.*'); // Only images
+    }
+  }
+}
