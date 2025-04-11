@@ -318,3 +318,54 @@ export async function unpublishClinic(id: string) {
     throw new Error(e.message);
   }
 }
+
+// Function to validate if a clinic is complete and ready for publishing
+export function validateClinic(clinic: Partial<Clinic>): { isValid: boolean; missingFields: string[] } {
+  const missingFields: string[] = [];
+  
+  // Required fields for a complete clinic
+  const requiredFields = [
+    'name',
+    'description',
+    'address.street',
+    'address.city',
+    'address.country',
+    'address.postalCode',
+    'contact.phone',
+    'contact.email',
+    'services',
+    'priceRange.min',
+    'priceRange.max',
+    'priceRange.currency',
+    'operatingHours',
+    'images.main'
+  ];
+
+  // Check each required field
+  for (const field of requiredFields) {
+    const value = field.split('.').reduce((obj, key) => obj?.[key], clinic as any);
+    if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+      missingFields.push(field);
+    }
+  }
+
+  // Special validation for operating hours
+  if (clinic.operatingHours) {
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+    for (const day of days) {
+      if (!clinic.operatingHours[day]?.open || !clinic.operatingHours[day]?.close) {
+        missingFields.push(`operatingHours.${day}`);
+      }
+    }
+  }
+
+  // Special validation for services
+  if (!clinic.services || clinic.services.length === 0) {
+    missingFields.push('services');
+  }
+
+  return {
+    isValid: missingFields.length === 0,
+    missingFields
+  };
+}
