@@ -48,8 +48,11 @@ async function isSlugTaken(slug: string): Promise<boolean> {
 
 // Function to generate a unique slug for a clinic
 async function createUniqueSlug(name: string): Promise<string> {
-  // Get all existing slugs
-  const q = query(collection(db, 'clinics'));
+  // Get all published clinics to check existing slugs
+  const q = query(
+    collection(db, 'clinics'),
+    where('status', '==', 'published')
+  );
   const querySnapshot = await getDocs(q);
   const existingSlugs = querySnapshot.docs.map(doc => (doc.data() as Clinic).slug);
   
@@ -230,8 +233,19 @@ export async function addClinic(clinicData: Omit<Clinic, 'id' | 'createdAt' | 'u
 
 export async function updateClinic(id: string, clinicData: Partial<Clinic>) {
   try {
+    console.log('=== Initial Clinic Document Query ===');
+    console.log('Attempting to fetch clinic document with ID:', id);
+    
     const docRef = doc(db, 'clinics', id);
     const currentDoc = await getDoc(docRef);
+    
+    console.log('Document exists:', currentDoc.exists());
+    if (currentDoc.exists()) {
+      console.log('Document data:', currentDoc.data());
+    } else {
+      console.log('Document not found');
+    }
+    console.log('===================================');
     
     if (!currentDoc.exists()) {
       throw new Error('Clinic not found');
@@ -251,8 +265,16 @@ export async function updateClinic(id: string, clinicData: Partial<Clinic>) {
       updatedAt: serverTimestamp()
     };
 
-    console.log('Updating clinic with ID:', id);
-    console.log('Update data:', dataToWrite);
+    // Get current user ID for debugging
+    let currentUserId: string | undefined;
+    user.subscribe(u => currentUserId = u?.id)();
+
+    console.log('=== Clinic Update Debug Info ===');
+    console.log('Current User ID:', currentUserId);
+    console.log('Clinic ID:', id);
+    console.log('Current Clinic Data:', currentData);
+    console.log('Update Data:', dataToWrite);
+    console.log('===============================');
 
     await updateDoc(docRef, dataToWrite);
   } catch (e: any) {
