@@ -12,7 +12,7 @@
   let loading = true;
   let error: string | null = null;
   let currentStep = 0;
-  let imageFiles: { main: File | null; gallery: File[] } = { main: null, gallery: [] };
+  let imageFiles: { main: File | null; logo: File | null; gallery: File[] } = { main: null, logo: null, gallery: [] };
   let validationResult = null;
 
   // Form data
@@ -112,6 +112,10 @@
         clinic.images.main = await handleImageUpload(imageFiles.main, clinicId);
       }
 
+      if (imageFiles.logo) {
+        clinic.images.logo = await handleImageUpload(imageFiles.logo, clinicId);
+      }
+
       if (imageFiles.gallery.length > 0) {
         const galleryUrls = await Promise.all(
           imageFiles.gallery.map((file) => handleImageUpload(file, clinicId))
@@ -158,6 +162,13 @@
     const input = event.target as HTMLInputElement;
     if (input?.files?.length) {
       imageFiles.main = input.files[0];
+    }
+  }
+
+  function handleLogoImageChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input?.files?.length) {
+      imageFiles.logo = input.files[0];
     }
   }
 
@@ -513,6 +524,40 @@
                 <img
                   src={imageFiles.main ? URL.createObjectURL(imageFiles.main) : clinic.images.main}
                   alt="Main clinic image"
+                  class="h-32 w-full object-cover rounded-lg"
+                />
+              </div>
+            {/if}
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Logo Image</label>
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
+              <div class="space-y-1 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="flex text-sm text-gray-600">
+                  <label for="logo-image" class="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
+                    <span>Upload a file</span>
+                    <input
+                      id="logo-image"
+                      type="file"
+                      accept="image/*"
+                      on:change={handleLogoImageChange}
+                      class="sr-only"
+                    />
+                  </label>
+                  <p class="pl-1">or drag and drop</p>
+                </div>
+                <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+              </div>
+            </div>
+            {#if clinic.images.logo || imageFiles.logo}
+              <div class="mt-2">
+                <img
+                  src={imageFiles.logo ? URL.createObjectURL(imageFiles.logo) : clinic.images.logo}
+                  alt="Clinic logo"
                   class="h-32 w-full object-cover rounded-lg"
                 />
               </div>

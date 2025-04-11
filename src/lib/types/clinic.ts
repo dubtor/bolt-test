@@ -58,6 +58,7 @@ export interface Clinic {
   };
   images: {
     main: string;
+    logo: string;
     gallery: string[];
   };
   doctors: Doctor[];
@@ -102,6 +103,7 @@ export function createEmptyClinic(): Omit<Clinic, 'id'> {
     },
     images: {
       main: '',
+      logo: '',
       gallery: []
     },
     doctors: [],

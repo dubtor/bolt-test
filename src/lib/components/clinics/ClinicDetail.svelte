@@ -91,6 +91,15 @@
         alt={clinic.name}
         class="absolute h-full w-full object-cover"
       />
+      {#if clinic.images.logo}
+        <div class="absolute bottom-4 left-4 w-24 h-24 bg-white rounded-lg p-2 shadow-md">
+          <img
+            src={clinic.images.logo}
+            alt={`${clinic.name} logo`}
+            class="w-full h-full object-contain"
+          />
+        </div>
+      {/if}
       {#if isOwner}
         <div class="absolute top-4 right-4 space-x-2 flex items-center">
           <span class="bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-medium">
