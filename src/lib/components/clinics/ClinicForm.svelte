@@ -209,13 +209,18 @@
       <button
         type="button"
         on:click={handleSaveChanges}
-        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-        disabled={loading}
+        class="px-4 py-2 rounded-lg bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
+        disabled={loading || (!validationResult.isValid && clinic.status === 'published')}
       >
         Save Changes
       </button>
     </div>
 
+    {#if !validationResult.isValid && clinic.status === 'published'}
+      <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+        Fill all required fields with valid information to save changes on already published clinics
+      </div>
+    {/if}
     {#if error}
       <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
         {error}
@@ -612,13 +617,7 @@
     </div>
 
     <!-- Navigation buttons -->
-    <div class="flex justify-between mt-8">
-      {#if !validationResult.isValid}
-        <div class="text-sm text-red-600">Complete all required fields to save changes</div>
-      {/if}
-    </div>
-
-    {#if !validationResult.isValid}
+  {#if !validationResult.isValid}
       <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
         <h3 class="text-yellow-800 font-semibold mb-2">Missing Required Fields:</h3>
         <ul class="list-disc list-inside text-yellow-700">
