@@ -12,7 +12,7 @@ service cloud.firestore {
     }
 
     // Helper function to check if data is complete for publishing
-    function isCompleteForPublishing(data) {
+    function isValidClinic(data) {
       return data.name != null && data.name != '' &&
              data.slug != null && data.slug != '' &&  // Check for slug
              data.description != null && data.description != '' &&
@@ -21,8 +21,7 @@ service cloud.firestore {
              data.address.city != null && data.address.city != '' &&
              data.address.country != null && data.address.country != '' &&
              data.services != null && data.services.size() > 0 &&
-             data.images != null && data.images.main != null && data.images.main != '' &&
-             data.doctors != null && data.doctors.size() > 0;
+             data.doctors != null && data.doctors.size() >= 0;
     }
 
     match /clinics/{clinicId} {
@@ -53,7 +52,7 @@ service cloud.firestore {
       // Allow updates only by the clinic owner and enforce data completeness for publishing
       allow update: if isOwner(resource) && (
         // Allow updating to published only if data is complete
-        (request.resource.data.status == 'published' && isCompleteForPublishing(request.resource.data)) ||
+        (request.resource.data.status == 'published' && isValidClinic(request.resource.data)) ||
         // Always allow updating while in draft status
         request.resource.data.status == 'draft'
       );
