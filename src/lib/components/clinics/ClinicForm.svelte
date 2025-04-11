@@ -1,62 +1,22 @@
-<script lang="ts">
+<script>
   import { onMount } from 'svelte';
   import { db, storage, auth } from '../../firebase';
   import { doc, getDoc } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-  import type { Clinic, Doctor } from '../../types';
-  import { countries, regions, hasRegions, type CountryCode } from '../../utils/countries';
-  import { addClinic, updateClinic, validateClinic } from '../../stores/clinics';
+  import { countries, regions, hasRegions } from '../../utils/countries';
+  import { addClinic, updateClinic } from '../../stores/clinics';
+  import { createEmptyClinic, validateClinic } from '../../types/clinic';
 
-  export let clinicId: string | undefined = undefined;
+  export let clinicId = undefined;
   
   let loading = clinicId ? true : false;
-  let error: string | null = null;
+  let error = null;
   let currentStep = 0;
-  let imageFiles: { main: File | null; gallery: File[] } = { main: null, gallery: [] };
-  let validationResult: { isValid: boolean; missingFields: string[] } | null = null;
+  let imageFiles = { main: null, gallery: [] };
+  let validationResult = null;
 
   // Form data
-  let clinic: Omit<Clinic, 'id'> = {
-    name: '',
-    description: '',
-    address: {
-      street: '',
-      city: '',
-      country: '' as CountryCode,
-      region: '',
-      postalCode: ''
-    },
-    services: [],
-    priceRange: {
-      min: 0,
-      max: 0,
-      currency: '€'
-    },
-    contact: {
-      phone: '',
-      email: '',
-      website: ''
-    },
-    operatingHours: {
-      monday: { open: '', close: '' },
-      tuesday: { open: '', close: '' },
-      wednesday: { open: '', close: '' },
-      thursday: { open: '', close: '' },
-      friday: { open: '', close: '' }
-    },
-    images: {
-      main: '',
-      gallery: []
-    },
-    doctors: [],
-    rating: 0,
-    reviewCount: 0,
-    status: 'draft',
-    userId: '',
-    slug: '',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  };
+  let clinic = createEmptyClinic();
 
   const steps = [
     { title: 'General', fields: ['name', 'description'] },
@@ -105,7 +65,7 @@
     }
   }
 
-  async function handleImageUpload(file: File, path: string): Promise<string> {
+  async function handleImageUpload(file, path) {
     const storageRef = ref(storage, path);
     const snapshot = await uploadBytes(storageRef, file);
     return getDownloadURL(snapshot.ref);
@@ -151,7 +111,7 @@
       }
 
       window.location.href = '/my-clinics';
-    } catch (e: any) {
+    } catch (e) {
       error = e.message;
       console.error(e);
     } finally {
@@ -206,7 +166,7 @@
       }
 
       window.location.href = '/';
-    } catch (e: any) {
+    } catch (e) {
       error = e.message;
       console.error(e);
     } finally {
@@ -224,26 +184,26 @@
     }];
   }
 
-  function removeDoctor(index: number) {
+  function removeDoctor(index) {
     clinic.doctors = clinic.doctors.filter((_, i) => i !== index);
   }
 
-  function handleMainImageChange(event: Event) {
-    const input = event.target as HTMLInputElement;
+  function handleMainImageChange(event) {
+    const input = event.target;
     if (input.files?.length) {
       imageFiles.main = input.files[0];
     }
   }
 
-  function handleGalleryImagesChange(event: Event) {
-    const input = event.target as HTMLInputElement;
+  function handleGalleryImagesChange(event) {
+    const input = event.target;
     if (input.files?.length) {
       imageFiles.gallery = Array.from(input.files);
     }
   }
 
-  function handleServiceChange(e: Event, service: string) {
-    const target = e.target as HTMLInputElement;
+  function handleServiceChange(e, service) {
+    const target = e.target;
     if (target.checked) {
       clinic.services = [...clinic.services, service];
     } else {
@@ -251,8 +211,8 @@
     }
   }
 
-  function handleDoctorQualificationChange(e: Event, doctorIndex: number, qualification: string) {
-    const target = e.target as HTMLInputElement;
+  function handleDoctorQualificationChange(e, doctorIndex, qualification) {
+    const target = e.target;
     if (target.checked) {
       clinic.doctors[doctorIndex].qualifications = [...clinic.doctors[doctorIndex].qualifications, qualification];
     } else {
@@ -260,8 +220,8 @@
     }
   }
 
-  function handleDoctorFieldChange(e: Event, doctorIndex: number, field: keyof Doctor) {
-    const target = e.target as HTMLInputElement;
+  function handleDoctorFieldChange(e, doctorIndex, field) {
+    const target = e.target;
     clinic.doctors[doctorIndex] = {
       ...clinic.doctors[doctorIndex],
       [field]: field === 'experience' ? parseInt(target.value) || 0 : target.value
@@ -657,7 +617,8 @@
                     type="text"
                     value={doctor.qualifications.join(', ')}
                     on:input={(e) => {
-                      doctor.qualifications = e.target.value.split(',').map(q => q.trim()).filter(Boolean);
+                      const target = e.target;
+                      doctor.qualifications = target.value.split(',').map(q => q.trim()).filter(Boolean);
                     }}
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
