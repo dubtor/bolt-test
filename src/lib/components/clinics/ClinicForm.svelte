@@ -1,18 +1,18 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
   import { db, storage, auth } from '../../firebase';
   import { doc, getDoc } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
   import { countries, regions, hasRegions } from '../../utils/countries';
-  import { addClinic, updateClinic } from '../../stores/clinics';
+  import { updateClinic } from '../../stores/clinics';
   import { createEmptyClinic, validateClinic } from '../../types/clinic';
 
-  export let clinicId = undefined;
+  export let clinicId: string;
   
-  let loading = clinicId ? true : false;
-  let error = null;
+  let loading = true;
+  let error: string | null = null;
   let currentStep = 0;
-  let imageFiles = { main: null, gallery: [] };
+  let imageFiles: { main: File | null; gallery: File[] } = { main: null, gallery: [] };
   let validationResult = null;
 
   // Form data
@@ -49,7 +49,9 @@
   $: validationResult = validateClinic(clinic);
 
   async function fetchClinic() {
-    if (!clinicId) return;
+    if (!clinicId){
+      throw new Error('Valid clinic ID is required for editing form');
+    }
     
     try {
       const docRef = doc(db, 'clinics', clinicId);
@@ -84,14 +86,14 @@
 
       // Handle image uploads
       if (imageFiles.main) {
-        const mainImagePath = `clinics/${currentUser.uid}/${Date.now()}_main`;
+        const mainImagePath = `clinics/${clinicId}/${Date.now()}_main`;
         clinic.images.main = await handleImageUpload(imageFiles.main, mainImagePath);
       }
 
       if (imageFiles.gallery.length > 0) {
         const galleryUrls = await Promise.all(
           imageFiles.gallery.map((file, index) => {
-            const galleryPath = `clinics/${currentUser.uid}/${Date.now()}_gallery_${index}`;
+            const galleryPath = `clinics/${clinicId}/${Date.now()}_gallery_${index}`;
             return handleImageUpload(file, galleryPath);
           })
         );
@@ -106,12 +108,8 @@
         delete clinicData.address.region;
       }
 
-      // Add or update clinic using store functions
-      if (clinicId) {
-        await updateClinic(clinicId, clinicData);
-      } else {
-        await addClinic(clinicData);
-      }
+      // update clinic using store functions
+      await updateClinic(clinicId, clinicData);
 
       // Remove the navigation to /my-clinics
       loading = false;
@@ -137,22 +135,22 @@
     clinic.doctors = clinic.doctors.filter((_, i) => i !== index);
   }
 
-  function handleMainImageChange(event) {
-    const input = event.target;
-    if (input.files?.length) {
+  function handleMainImageChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input?.files?.length) {
       imageFiles.main = input.files[0];
     }
   }
 
-  function handleGalleryImagesChange(event) {
-    const input = event.target;
-    if (input.files?.length) {
+  function handleGalleryImagesChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input?.files?.length) {
       imageFiles.gallery = Array.from(input.files);
     }
   }
 
-  function handleServiceChange(e, service) {
-    const target = e.target;
+  function handleServiceChange(e: Event, service: string) {
+    const target = e.target as HTMLInputElement;
     if (target.checked) {
       clinic.services = [...clinic.services, service];
     } else {
@@ -160,8 +158,8 @@
     }
   }
 
-  function handleDoctorQualificationChange(e, doctorIndex, qualification) {
-    const target = e.target;
+  function handleDoctorQualificationChange(e: Event, doctorIndex: number, qualification: string) {
+    const target = e.target as HTMLInputElement;
     if (target.checked) {
       clinic.doctors[doctorIndex].qualifications = [...clinic.doctors[doctorIndex].qualifications, qualification];
     } else {
@@ -169,8 +167,10 @@
     }
   }
 
-  function handleDoctorFieldChange(e, doctorIndex, field) {
-    const target = e.target;
+  function handleDoctorFieldChange(e: Event, doctorIndex: number, field: string) {
+    const target = e.target as HTMLInputElement | null;
+    if (!target) return;
+    
     clinic.doctors[doctorIndex] = {
       ...clinic.doctors[doctorIndex],
       [field]: field === 'experience' ? parseInt(target.value) || 0 : target.value
@@ -196,7 +196,7 @@
     <div class="flex justify-between items-center mb-6">
       <div class="flex items-center gap-4">
 
-        <h1 class="text-2xl font-bold">{clinicId ? 'Edit' : 'Add'} Clinic</h1>
+        <h1 class="text-2xl font-bold">Edit Clinic</h1>
         {#if validateClinic(clinic).isValid}
           <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
             Valid
