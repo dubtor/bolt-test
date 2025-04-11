@@ -70,10 +70,33 @@
     }
   }
 
-  async function handleImageUpload(file, path) {
-    const storageRef = ref(storage, path);
-    const snapshot = await uploadBytes(storageRef, file);
-    return getDownloadURL(snapshot.ref);
+  async function handleImageUpload(file: File, clinicId: string): Promise<string> {
+    try {
+      console.log('Starting image upload:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        clinicId
+      });
+
+      const extension = file.name.split('.').pop();
+      const path = `clinics/${clinicId}/${crypto.randomUUID()}.${extension}`;
+      console.log('Generated storage path:', path);
+
+      const storageRef = ref(storage, path);
+      console.log('Storage reference created');
+
+      const snapshot = await uploadBytes(storageRef, file);
+      console.log('File uploaded successfully:', snapshot);
+
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      console.log('Download URL generated:', downloadURL);
+
+      return downloadURL;
+    } catch (error) {
+      console.error('Error in handleImageUpload:', error);
+      throw error;
+    }
   }
 
   async function handleSaveChanges() {
@@ -86,16 +109,12 @@
 
       // Handle image uploads
       if (imageFiles.main) {
-        const mainImagePath = `clinics/${clinicId}/${Date.now()}_main`;
-        clinic.images.main = await handleImageUpload(imageFiles.main, mainImagePath);
+        clinic.images.main = await handleImageUpload(imageFiles.main, clinicId);
       }
 
       if (imageFiles.gallery.length > 0) {
         const galleryUrls = await Promise.all(
-          imageFiles.gallery.map((file, index) => {
-            const galleryPath = `clinics/${clinicId}/${Date.now()}_gallery_${index}`;
-            return handleImageUpload(file, galleryPath);
-          })
+          imageFiles.gallery.map((file) => handleImageUpload(file, clinicId))
         );
         clinic.images.gallery = galleryUrls;
       }
