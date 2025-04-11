@@ -1,16 +1,8 @@
-import type { CountryCode, RegionCode } from './utils/countries';
-
-// User related types
-export interface User {
-  id: string;
-  email: string;
-  role: 'admin' | 'user';
-  createdAt: Date;
-}
+import type { CountryCode } from '../../utils/countries';
+import type { Doctor } from '../doctor/types';
 
 export type ClinicStatus = 'draft' | 'published';
 
-// Clinic related types
 export interface Clinic {
   id: string;
   name: string;
@@ -56,22 +48,4 @@ export interface Clinic {
   userId: string;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface Doctor {
-  id: string;
-  name: string;
-  specialization: string;
-  experience: number;
-  image?: string;
-  qualifications: string[];
-}
-
-export interface Review {
-  id: string;
-  clinicId: string;
-  userId: string;
-  rating: number;
-  comment: string;
-  createdAt: Date;
-}
+} 
