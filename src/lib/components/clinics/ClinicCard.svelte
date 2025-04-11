@@ -1,7 +1,8 @@
 <script lang="ts">
-  import type { Clinic } from '../../types';
+  import type { Clinic } from '../../types/clinic';
   import { user } from '../../stores/auth';
-  import { getCountryName, getRegionName, hasRegions, getCountrySlug } from '../../utils/countries';
+  import { getCountryName, getRegionName, hasRegions } from '../../utils/countries';
+  import { getClinicUrl } from '../../utils/clinic';
 
   export let clinic: Clinic;
 
@@ -10,7 +11,7 @@
   }
 
   $: isOwner = $user && clinic.userId === $user.id;
-  $: clinicUrl = `/clinics/${getCountrySlug(clinic.address.country)}/${clinic.slug}`;
+  $: clinicUrl = getClinicUrl(clinic);
 </script>
 
 <div class="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col">

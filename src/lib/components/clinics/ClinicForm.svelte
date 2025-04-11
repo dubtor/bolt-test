@@ -113,11 +113,12 @@
         await addClinic(clinicData);
       }
 
-      window.location.href = '/my-clinics';
+      // Remove the navigation to /my-clinics
+      loading = false;
     } catch (e) {
       error = e.message;
       console.error(e);
-    } finally {
+    
       loading = false;
     }
   }
@@ -547,14 +548,6 @@
       {:else if currentStep === 5}
         <!-- Medical Team -->
         <div class="space-y-6">
-          <button
-            type="button"
-            on:click={addDoctor}
-            class="mb-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            Add Doctor
-          </button>
-
           {#each clinic.doctors as doctor, index}
             <div class="p-4 bg-gray-50 rounded-lg space-y-4">
               <div class="flex justify-between items-center">
@@ -612,6 +605,14 @@
               </div>
             </div>
           {/each}
+          <a
+            href="#"
+            on:click|preventDefault={addDoctor}
+            class="mb-4 inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          >
+            + Add Doctor
+          </a>
+
         </div>
       {/if}
     </div>

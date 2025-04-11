@@ -172,25 +172,36 @@
 
       <div class="mt-6">
         <h2 class="text-xl font-semibold mb-2">Medical Team</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {#each clinic.doctors as doctor}
-            <div class="bg-gray-50 p-4 rounded-lg">
-              {#if doctor.image}
-                <img src={doctor.image} alt={doctor.name} class="w-24 h-24 rounded-full mx-auto mb-3 object-cover" />
-              {/if}
-              <h3 class="font-semibold text-lg">{doctor.name}</h3>
-              <p class="text-gray-600">{doctor.specialization}</p>
-              <p class="text-sm text-gray-500">{doctor.experience} years experience</p>
-              <div class="mt-2">
-                {#each doctor.qualifications as qualification}
-                  <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">
-                    {qualification}
-                  </span>
-                {/each}
+        {#if !clinic.doctors || clinic.doctors.length === 0}
+          <div class="bg-gray-100 p-4 rounded-lg flex items-start">
+            <svg class="w-5 h-5 text-gray-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-gray-600">
+              This clinic has not specified information about their surgeons.
+            </p>
+          </div>
+        {:else}
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {#each clinic.doctors as doctor}
+              <div class="bg-gray-50 p-4 rounded-lg">
+                {#if doctor.image}
+                  <img src={doctor.image} alt={doctor.name} class="w-24 h-24 rounded-full mx-auto mb-3 object-cover" />
+                {/if}
+                <h3 class="font-semibold text-lg">{doctor.name}</h3>
+                <p class="text-gray-600">{doctor.specialization}</p>
+                <p class="text-sm text-gray-500">{doctor.experience} years experience</p>
+                <div class="mt-2">
+                  {#each doctor.qualifications as qualification}
+                    <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">
+                      {qualification}
+                    </span>
+                  {/each}
+                </div>
               </div>
-            </div>
-          {/each}
-        </div>
+            {/each}
+          </div>
+        {/if}
       </div>
 
       {#if clinic.images.gallery.length > 0}

@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { clinics, isLoading, error, fetchMyClinics, publishClinic, unpublishClinic } from '../../stores/clinics';
+  import { clinics, isLoading, error, fetchMyClinics, publishClinic, unpublishClinic, addClinic } from '../../stores/clinics';
   import ClinicCard from './ClinicCard.svelte';
   import { user } from '../../stores/auth';
-  import { getCountryName } from '../../utils/countries';
+  import { getCountryName, getCountrySlug } from '../../utils/countries';
+  import { getClinicUrl, generateDraftClinicName } from '../../utils/clinic';
+  import { createEmptyClinic } from '../../types/clinic';
   import { db } from '../../firebase';
   import { doc, deleteDoc } from 'firebase/firestore';
   import { Trash2 } from 'lucide-svelte';
@@ -43,6 +45,26 @@
     }
   }
 
+  async function handleAddNewClinic() {
+    try {
+      const currentUser = $user;
+      if (!currentUser) return;
+
+      const draftClinic = {
+        ...createEmptyClinic(),
+        name: generateDraftClinicName(),
+        slug: generateDraftClinicName().toLowerCase().replace(/\s+/g, '-'),
+        userId: currentUser.id,
+      };
+
+      const newClinicId = await addClinic(draftClinic);
+      window.location.href = `/clinic/${newClinicId}/edit`;
+    } catch (e) {
+      console.error('Error creating draft clinic:', e);
+      error.set('Error creating new clinic. Please try again.');
+    }
+  }
+
   onMount(() => {
     if ($user) {
       fetchMyClinics();
@@ -53,12 +75,12 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-bold text-gray-900">My Clinics</h2>
-    <a
-      href="/clinic/new"
+    <button
+      on:click={handleAddNewClinic}
       class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
     >
       Add New Clinic
-    </a>
+    </button>
   </div>
 
   {#if $error}
@@ -108,6 +130,14 @@
                 >
                   Edit
                 </a>
+                {#if clinic.status === 'published'}
+                <a
+                  href={getClinicUrl(clinic)}
+                  class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200"
+                >
+                  View
+                </a>
+                {/if}
                 <button
                   on:click={() => handleDelete(clinic.id)}
                   class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
@@ -140,12 +170,12 @@
           <p class="mt-2 text-sm text-gray-500">
             You haven't created any clinics yet. Click "Add New Clinic" to get started.
           </p>
-          <a
-            href="/clinic/new"
+          <button
+            on:click={handleAddNewClinic}
             class="mt-4 inline-block px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
           >
             Add New Clinic
-          </a>
+          </button>
         </div>
       {/if}
     </div>
