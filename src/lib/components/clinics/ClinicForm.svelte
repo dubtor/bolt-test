@@ -45,6 +45,9 @@
     ? regions[clinic.address.country] 
     : null;
 
+  // Reactive validation
+  $: validationResult = validateClinic(clinic);
+
   async function fetchClinic() {
     if (!clinicId) return;
     
@@ -71,7 +74,7 @@
     return getDownloadURL(snapshot.ref);
   }
 
-  async function handleSaveDraft() {
+  async function handleSaveChanges() {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
 
@@ -105,67 +108,12 @@
 
       // Add or update clinic using store functions
       if (clinicId) {
-        await updateClinic(clinicId, { ...clinicData, status: 'draft' });
+        await updateClinic(clinicId, clinicData);
       } else {
-        await addClinic({ ...clinicData, status: 'draft' });
+        await addClinic(clinicData);
       }
 
       window.location.href = '/my-clinics';
-    } catch (e) {
-      error = e.message;
-      console.error(e);
-    } finally {
-      loading = false;
-    }
-  }
-
-  async function handleSubmit() {
-    const currentUser = auth.currentUser;
-    if (!currentUser) return;
-
-    try {
-      loading = true;
-      error = null;
-
-      // Validate the clinic before publishing
-      validationResult = validateClinic(clinic);
-      if (!validationResult.isValid) {
-        error = 'Please complete all required fields before publishing.';
-        return;
-      }
-
-      // Handle image uploads
-      if (imageFiles.main) {
-        const mainImagePath = `clinics/${currentUser.uid}/${Date.now()}_main`;
-        clinic.images.main = await handleImageUpload(imageFiles.main, mainImagePath);
-      }
-
-      if (imageFiles.gallery.length > 0) {
-        const galleryUrls = await Promise.all(
-          imageFiles.gallery.map((file, index) => {
-            const galleryPath = `clinics/${currentUser.uid}/${Date.now()}_gallery_${index}`;
-            return handleImageUpload(file, galleryPath);
-          })
-        );
-        clinic.images.gallery = galleryUrls;
-      }
-
-      // Create a copy of the clinic data for submission
-      const clinicData = { ...clinic };
-      
-      // Remove undefined region if country doesn't have regions
-      if (clinicData.address.region === undefined) {
-        delete clinicData.address.region;
-      }
-
-      // Add or update clinic using store functions
-      if (clinicId) {
-        await updateClinic(clinicId, { ...clinicData, status: 'published' });
-      } else {
-        await addClinic({ ...clinicData, status: 'published' });
-      }
-
-      window.location.href = '/';
     } catch (e) {
       error = e.message;
       console.error(e);
@@ -231,9 +179,42 @@
   onMount(fetchClinic);
 </script>
 
+<div class="max-w-4xl mx-auto mb-8">
+    <a
+    href="/my-clinics"
+    class="text-gray-600 hover:text-gray-900 flex items-center"
+  >
+    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+    Back
+  </a>
+</div>
 <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
   <div class="p-6">
-    <h1 class="text-2xl font-bold mb-6">{clinicId ? 'Edit' : 'Add'} Clinic</h1>
+    <div class="flex justify-between items-center mb-6">
+      <div class="flex items-center gap-4">
+
+        <h1 class="text-2xl font-bold">{clinicId ? 'Edit' : 'Add'} Clinic</h1>
+        {#if validateClinic(clinic).isValid}
+          <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+            Valid
+          </span>
+        {:else}
+          <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+            Incomplete
+          </span>
+        {/if}
+      </div>
+      <button
+        type="button"
+        on:click={handleSaveChanges}
+        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+        disabled={loading}
+      >
+        Save Changes
+      </button>
+    </div>
 
     {#if error}
       <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
@@ -631,64 +612,13 @@
     </div>
 
     <!-- Navigation buttons -->
-    <div class="flex justify-between">
-      <button
-        type="button"
-        class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-        disabled={currentStep === 0}
-        on:click={() => currentStep--}
-      >
-        Previous
-      </button>
-
-      <button
-        type="button"
-        class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-        disabled={loading}
-        on:click={() => {
-          if (currentStep === steps.length - 1) {
-            handleSubmit();
-          } else {
-            currentStep++;
-          }
-        }}
-      >
-        {#if loading}
-          <span class="inline-flex items-center">
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Processing...
-          </span>
-        {:else if currentStep === steps.length - 1}
-          {clinicId ? 'Update' : 'Publish'} Clinic
-        {:else}
-          Next
-        {/if}
-      </button>
-    </div>
-
     <div class="flex justify-between mt-8">
-      <button
-        type="button"
-        on:click={handleSaveDraft}
-        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-        disabled={loading}
-      >
-        Save Draft
-      </button>
-      <button
-        type="button"
-        on:click={handleSubmit}
-        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        disabled={loading}
-      >
-        {clinicId ? 'Update' : 'Publish'} Clinic
-      </button>
+      {#if !validationResult.isValid}
+        <div class="text-sm text-red-600">Complete all required fields to save changes</div>
+      {/if}
     </div>
 
-    {#if validationResult && !validationResult.isValid}
+    {#if !validationResult.isValid}
       <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
         <h3 class="text-yellow-800 font-semibold mb-2">Missing Required Fields:</h3>
         <ul class="list-disc list-inside text-yellow-700">

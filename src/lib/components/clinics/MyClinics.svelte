@@ -7,10 +7,19 @@
   import { db } from '../../firebase';
   import { doc, deleteDoc } from 'firebase/firestore';
   import { Trash2 } from 'lucide-svelte';
+  import { validateClinic } from '../../types/clinic';
 
   async function handlePublishToggle(clinicId: string, currentStatus: 'draft' | 'published') {
     try {
       if (currentStatus === 'draft') {
+        const clinic = $clinics.find(c => c.id === clinicId);
+        if (clinic) {
+          const validationResult = validateClinic(clinic);
+          if (!validationResult.isValid) {
+            alert('Cannot publish clinic. Please complete all required fields first.');
+            return;
+          }
+        }
         await publishClinic(clinicId);
       } else {
         await unpublishClinic(clinicId);
@@ -69,7 +78,17 @@
           <div class="p-6">
             <div class="flex justify-between items-start">
               <div>
-                <h3 class="text-xl font-semibold">{clinic.name || '(Unnamed Clinic)'}</h3>
+                <h3 class="text-xl font-semibold">{clinic.name || '(Unnamed Clinic)'}                
+                  {#if !validateClinic(clinic).isValid}
+                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+                      Incomplete
+                    </span>
+                  {:else}
+                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                      Valid
+                    </span>
+                  {/if}
+                </h3>
                 <p class="text-gray-600 mt-2">{clinic.description}</p>
               </div>
               <div class="flex gap-2 items-center">
