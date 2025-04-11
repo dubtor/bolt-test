@@ -12,6 +12,7 @@
     
     try {
       await signIn(email, password);
+      window.location.href = '/';
     } catch (e: any) {
       error = e.message;
     } finally {
