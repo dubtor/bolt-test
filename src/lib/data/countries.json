@@ -23,19 +23,19 @@
         "BB": { "name": "Brandenburg", "slug": "brandenburg" },
         "BE": { "name": "Berlin", "slug": "berlin" },
         "BW": { "name": "Baden-Württemberg", "slug": "baden-wurttemberg" },
-        "BY": { "name": "Bavaria", "slug": "bavaria" },
+        "BY": { "name": "Bayern", "slug": "bayern" },
         "HB": { "name": "Bremen", "slug": "bremen" },
-        "HE": { "name": "Hesse", "slug": "hesse" },
+        "HE": { "name": "Hessen", "slug": "hessen" },
         "HH": { "name": "Hamburg", "slug": "hamburg" },
         "MV": { "name": "Mecklenburg-Vorpommern", "slug": "mecklenburg-vorpommern" },
-        "NI": { "name": "Lower Saxony", "slug": "lower-saxony" },
-        "NW": { "name": "North Rhine-Westphalia", "slug": "north-rhine-westphalia" },
-        "RP": { "name": "Rhineland-Palatinate", "slug": "rhineland-palatinate" },
+        "NI": { "name": "Niedersachsen", "slug": "niedersachsen" },
+        "NW": { "name": "Nordrhein-Westfalen", "slug": "nordrhein-westfalen" },
+        "RP": { "name": "Rheinland-Pfalz", "slug": "rheinland-pfalz" },
         "SH": { "name": "Schleswig-Holstein", "slug": "schleswig-holstein" },
         "SL": { "name": "Saarland", "slug": "saarland" },
-        "SN": { "name": "Saxony", "slug": "saxony" },
-        "ST": { "name": "Saxony-Anhalt", "slug": "saxony-anhalt" },
-        "TH": { "name": "Thuringia", "slug": "thuringia" }
+        "SN": { "name": "Sachsen", "slug": "sachsen" },
+        "ST": { "name": "Sachsen-Anhalt", "slug": "sachsen-anhalt" },
+        "TH": { "name": "Thüringen", "slug": "thueringen" }
       }
     },
     {
