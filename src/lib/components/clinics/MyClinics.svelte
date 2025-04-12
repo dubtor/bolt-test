@@ -3,7 +3,7 @@
   import { clinics, isLoading, error, fetchMyClinics, publishClinic, unpublishClinic, addClinic } from '../../stores/clinics';
   import ClinicCard from './ClinicCard.svelte';
   import { user } from '../../stores/auth';
-  import { getCountryName, getCountrySlug } from '../../utils/countries';
+  import { getCountryName, getCountrySlug, getCountryFlag } from '../../utils/countries';
   import { getClinicUrl, generateDraftClinicName } from '../../utils/clinic';
   import { createEmptyClinic } from '../../types/clinic';
   import { db } from '../../firebase';
@@ -150,7 +150,16 @@
             
             <div class="mt-4 flex items-center gap-2">
               <span class="text-sm text-gray-600">
-                {clinic.address.city}, {getCountryName(clinic.address.country)}
+                {#if clinic.address.country}
+                  <img 
+                    src={getCountryFlag(clinic.address.country)} 
+                    alt={getCountryName(clinic.address.country)} 
+                    class="inline-block w-4 h-3 mr-1 align-middle"
+                  />
+                {/if}
+                {clinic.address.city},
+                {#if clinic.address.country} {getCountryName(clinic.address.country)}
+                {/if}
               </span>
               {#if clinic.rating > 0}
                 <span class="text-gray-300">•</span>

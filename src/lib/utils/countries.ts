@@ -54,6 +54,12 @@ export const regions: Record<CountryCode, Record<string, string>> = Object.fromE
     ])
 );
 
+
+// Helper function to get a specific country with all its data
+export function getCountry(code: CountryCode): Country | undefined {
+  return countryMap.get(code);
+}
+
 export function getCountryName(code: CountryCode): string {
   return countryMap.get(code)?.name || code;
 }
@@ -73,6 +79,10 @@ export function getCountryCodeBySlug(slug: string): CountryCode | undefined {
 
 export function isValidCountryCode(code: string): code is CountryCode {
   return countryMap.has(code);
+}
+
+export function getCountryFlag(code: CountryCode): string {
+  return `https://flagcdn.com/${code.toLowerCase()}.svg`;
 }
 
 export function getRegions(countryCode: CountryCode) {
@@ -110,9 +120,4 @@ export function hasRegions(countryCode: CountryCode): boolean {
 // Helper function to get all countries
 export function getAllCountries(): Country[] {
   return countryData.countries;
-}
-
-// Helper function to get a specific country with all its data
-export function getCountry(code: CountryCode): Country | undefined {
-  return countryMap.get(code);
 }

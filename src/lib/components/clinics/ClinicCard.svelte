@@ -3,6 +3,7 @@
   import { user } from '../../stores/auth';
   import { getCountryName, getRegionName, hasRegions } from '../../utils/countries';
   import { getClinicUrl } from '../../utils/clinic';
+  import { getCountryFlag } from '../../utils/countries';
 
   export let clinic: Clinic;
 
@@ -54,6 +55,11 @@
     </div>
     
     <p class="text-gray-600 mb-2">
+      <img 
+        src={getCountryFlag(clinic.address.country)} 
+        alt={getCountryName(clinic.address.country)} 
+        class="inline-block w-4 h-3 mr-1 align-middle"
+      />
       {clinic.address.city}
       {#if hasRegions(clinic.address.country) && clinic.address.region}
         , {getRegionName(clinic.address.country, clinic.address.region)}

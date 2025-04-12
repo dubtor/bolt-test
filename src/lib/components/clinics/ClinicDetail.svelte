@@ -4,7 +4,7 @@
   import { doc, deleteDoc } from 'firebase/firestore';
   import type { Clinic } from '../../types';
   import { user } from '../../stores/auth';
-  import { getCountryName, getRegionName, hasRegions, getCountryCodeBySlug } from '../../utils/countries';
+  import { getCountryName, getRegionName, hasRegions, getCountryCodeBySlug, getCountryFlag } from '../../utils/countries';
   import { getClinicBySlug } from '../../stores/clinics';
 
   export let countrySlug: string;
@@ -164,6 +164,11 @@
               {#if hasRegions(clinic.address.country) && clinic.address.region}
                 {getRegionName(clinic.address.country, clinic.address.region)}<br />
               {/if}
+              <img 
+                src={getCountryFlag(clinic.address.country)} 
+                alt={getCountryName(clinic.address.country)} 
+                class="inline-block w-4 h-3 mr-1 align-middle"
+              />
               {getCountryName(clinic.address.country)}
             </p>
           </div>

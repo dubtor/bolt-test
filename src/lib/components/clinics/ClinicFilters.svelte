@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { countries, regions, hasRegions } from '../../utils/countries';
+  import { countries, regions, hasRegions, getCountryFlag } from '../../utils/countries';
   import { clinics } from '../../stores/clinics';
   import type { CountryCode } from '../../utils/countries';
 
@@ -97,12 +97,17 @@
         {#each Object.entries(countries) as [code, name]}
           <button
             type="button"
-            class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+            class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2
               {selectedCountries.includes(code)
                 ? 'bg-primary-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
             on:click={() => toggleCountry(code)}
           >
+            <img 
+              src={getCountryFlag(code)} 
+              alt={name} 
+              class="w-4 h-3"
+            />
             {name}
           </button>
         {/each}
