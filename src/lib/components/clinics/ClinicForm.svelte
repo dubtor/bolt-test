@@ -165,6 +165,11 @@
     }
   }
 
+  function clearMainImage() {
+    imageFiles.main = null;
+    clinic.images.main = '';
+  }
+
   function handleLogoImageChange(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input?.files?.length) {
@@ -172,10 +177,29 @@
     }
   }
 
+  function clearLogoImage() {
+    imageFiles.logo = null;
+    clinic.images.logo = '';
+  }
+
   function handleGalleryImagesChange(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input?.files?.length) {
       imageFiles.gallery = Array.from(input.files);
+    }
+  }
+
+  function clearGalleryImages() {
+    imageFiles.gallery = [];
+    clinic.images.gallery = [];
+  }
+
+  function removeGalleryImage(index: number) {
+    if (index < imageFiles.gallery.length) {
+      imageFiles.gallery = imageFiles.gallery.filter((_, i) => i !== index);
+    } else {
+      const adjustedIndex = index - imageFiles.gallery.length;
+      clinic.images.gallery = clinic.images.gallery.filter((_, i) => i !== adjustedIndex);
     }
   }
 
@@ -520,12 +544,21 @@
               </div>
             </div>
             {#if clinic.images.main || imageFiles.main}
-              <div class="mt-2">
+              <div class="mt-2 relative">
                 <img
                   src={imageFiles.main ? URL.createObjectURL(imageFiles.main) : clinic.images.main}
                   alt="Main clinic image"
                   class="h-32 w-full object-cover rounded-lg"
                 />
+                <button
+                  on:click={clearMainImage}
+                  class="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full hover:bg-red-700"
+                  title="Remove image"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             {/if}
           </div>
@@ -554,12 +587,21 @@
               </div>
             </div>
             {#if clinic.images.logo || imageFiles.logo}
-              <div class="mt-2">
+              <div class="mt-2 relative">
                 <img
                   src={imageFiles.logo ? URL.createObjectURL(imageFiles.logo) : clinic.images.logo}
                   alt="Clinic logo"
                   class="h-32 w-full object-cover rounded-lg"
                 />
+                <button
+                  on:click={clearLogoImage}
+                  class="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full hover:bg-red-700"
+                  title="Remove image"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             {/if}
           </div>
@@ -590,20 +632,50 @@
             </div>
             {#if clinic.images.gallery.length > 0 || imageFiles.gallery.length > 0}
               <div class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-4">
-                {#each imageFiles.gallery as file}
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt="Gallery preview"
-                    class="h-32 w-full object-cover rounded-lg"
-                  />
+                {#each imageFiles.gallery as file, index}
+                  <div class="relative">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt="Gallery preview"
+                      class="h-32 w-full object-cover rounded-lg"
+                    />
+                    <button
+                      on:click={() => removeGalleryImage(index)}
+                      class="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full hover:bg-red-700"
+                      title="Remove image"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 {/each}
-                {#each clinic.images.gallery as url}
-                  <img
-                    src={url}
-                    alt="Gallery image"
-                    class="h-32 w-full object-cover rounded-lg"
-                  />
+                {#each clinic.images.gallery as url, index}
+                  <div class="relative">
+                    <img
+                      src={url}
+                      alt="Gallery image"
+                      class="h-32 w-full object-cover rounded-lg"
+                    />
+                    <button
+                      on:click={() => removeGalleryImage(index + imageFiles.gallery.length)}
+                      class="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full hover:bg-red-700"
+                      title="Remove image"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 {/each}
+              </div>
+              <div class="mt-2">
+                <button
+                  on:click={clearGalleryImages}
+                  class="text-red-600 hover:text-red-800 text-sm font-medium"
+                >
+                  Clear all gallery images
+                </button>
               </div>
             {/if}
           </div>
